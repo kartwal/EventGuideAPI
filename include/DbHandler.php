@@ -26,7 +26,7 @@ class DbHandler {
      * @param String $email User login email id
      * @param String $password User login password
      */
-    public function createUser($login, $email, $password) {
+    public function createUser($email, $password) {
         require_once 'PassHash.php';
         $response = array();
 
@@ -39,8 +39,8 @@ class DbHandler {
             $api_key = $this->generateApiKey();
 
             // insert query
-            $stmt = $this->conn->prepare("INSERT INTO users(user_login, user_email, user_password, api_key, status) values(?, ?, ?, ?, 1)");
-            $stmt->bind_param("ssss", $login, $email, $password_hash, $api_key);
+            $stmt = $this->conn->prepare("INSERT INTO users(user_email, user_password, api_key, status) values(?, ?, ?, 1)");
+            $stmt->bind_param("sss", $email, $password_hash, $api_key);
 
             $result = $stmt->execute();
 
@@ -201,14 +201,14 @@ class DbHandler {
         return md5(uniqid(rand(), true));
     }
 
-    /* ------------- `tasks` table method ------------------ */
+    /* ------------- `events` table method ------------------ */
 
     /**
      * Creating new task
      * @param String $user_id user id to whom task belongs to
      * @param String $task task text
      */
-    public function createTask($user_id, $task) {
+    public function createEvent($user_id, $task) {
         $stmt = $this->conn->prepare("INSERT INTO tasks(task) VALUES(?)");
         $stmt->bind_param("s", $task);
         $result = $stmt->execute();
@@ -233,42 +233,32 @@ class DbHandler {
     }
 
     /**
-     * Fetching single task
-     * @param String $task_id id of the task
+     * Fetching single event
+     * @param String $event_id of the event
      */
-    public function getTask($task_id, $user_id) {
-        $stmt = $this->conn->prepare("SELECT t.id, t.task, t.status, t.created_at from tasks t, user_tasks ut WHERE t.id = ? AND ut.task_id = t.id AND ut.user_id = ?");
-        $stmt->bind_param("ii", $task_id, $user_id);
-        if ($stmt->execute()) {
-            $res = array();
-            $stmt->bind_result($id, $task, $status, $created_at);
-            // TODO
-            // $task = $stmt->get_result()->fetch_assoc();
-            $stmt->fetch();
-            $res["id"] = $id;
-            $res["task"] = $task;
-            $res["status"] = $status;
-            $res["created_at"] = $created_at;
-            $stmt->close();
-            return $res;
-        } else {
-            return NULL;
-        }
-    }
-
     public function getEventDetails($event_id) {
-        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description_short, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
+        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description, e.event_latitude, e.event_longitude, e.event_start_date, e.event_end_date, e.event_additional_info, e.event_image, e.event_tickets, e.event_card_payment, e.event_max_participants, e.event_accepted, e.event_description_short, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
         $stmt->bind_param("i", $event_id);
         if ($stmt->execute()) {
             $res = array();
-            $stmt->bind_result($event_id, $event_title,  $event_descritpion_short, $participants);
-            // TODO
-            // $task = $stmt->get_result()->fetch_assoc();
+            $stmt->bind_result($event_id, $event_title, $event_description, $event_latitude, $event_longitude, $event_start_date, $event_end_date, $event_additional_info, $event_image, $event_tickets, $event_card_payment, $event_max_participants, $event_accepted, $event_descritpion_short, $participants);
             $stmt->fetch();
             $res["event_id"] = $event_id;
             $res["event_title"] = $event_title;
+            $res["event_description"] = $event_description;
+            $res["event_latitude"] = $event_latitude;
+            $res["event_longitude"] = $event_longitude;
+            $res["event_start_date"] = $event_start_date;
+            $res["event_end_date"] = $event_end_date;
+            $res["event_additional_info"] = $event_additional_info;
+            $res["event_image"] = $event_image;
+            $res["event_tickets"] = $event_tickets;
+            $res["event_card_payment"] = $event_card_payment;
+            $res["event_max_participants"] = $event_max_participants;
+            $res["event_accepted"] = $event_accepted;
             $res["event_descritpion_short"] = $event_descritpion_short;
             $res["participants"] = $participants;
+
             $stmt->close();
             return $res;
         } else {
@@ -277,12 +267,12 @@ class DbHandler {
     }
 
     /**
-     * Fetching all user tasks
+     * Fetching all user events
      * @param String $user_id id of the user
      */
-    public function getAllUserTasks($user_id) {
-        $stmt = $this->conn->prepare("SELECT * FROM events");
-        // $stmt->bind_param("i", $user_id);
+    public function getAllUserEvents($user_id) {
+        $stmt = $this->conn->prepare("SELECT e.* FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE ue.user_id = ?");
+        $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $tasks = $stmt->get_result();
         $stmt->close();

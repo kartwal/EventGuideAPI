@@ -56,16 +56,16 @@ function authenticate(\Slim\Route $route) {
  * User Registration
  * url - /register
  * method - POST
- * params - name, email, password
+ * params - email, password
  */
 $app->post('/register', function() use ($app) {
             // check for required params
-            verifyRequiredParams(array('login', 'email', 'password'));
+            verifyRequiredParams(array('email', 'password'));
 
             $response = array();
 
             // reading post params
-            $login = $app->request->post('login');
+            // $login = $app->request->post('login');
             $email = $app->request->post('email');
             $password = $app->request->post('password');
 
@@ -73,7 +73,7 @@ $app->post('/register', function() use ($app) {
             validateEmail($email);
 
             $db = new DbHandler();
-            $res = $db->createUser($login, $email, $password);
+            $res = $db->createUser($email, $password);
 
             if ($res == USER_CREATED_SUCCESSFULLY) {
                 $response["error"] = false;
@@ -134,11 +134,11 @@ $app->post('/login', function() use ($app) {
  */
 
 /**
- * Listing all tasks of particual user
+ * Listing all events
  * method GET
  * url /getEvents
  */
-$app->get('/getEvents', 'authenticate', function() {
+$app->get('/getEventsList', 'authenticate', function() {
             global $user_id;
             $response = array();
             $db = new DbHandler();
@@ -162,6 +162,36 @@ $app->get('/getEvents', 'authenticate', function() {
 
             echoRespnse(200, $response);
         });
+
+/**
+ * Listing all events of particual user
+ * method GET
+ * url /getEvents
+ */
+$app->get('/getAllUserEvents', 'authenticate', function() {
+          global $user_id;
+          $response = array();
+          $db = new DbHandler();
+
+          // fetching all user tasks
+          $result = $db->getAllUserEvents($user_id);
+
+          $response["error"] = false;
+          $response["events"] = array();
+
+          // looping through result and preparing tasks array
+          while ($event = $result->fetch_assoc()) {
+              $tmp = array();
+              $tmp["event_id"] = $event["event_id"];
+              $tmp["event_title"] = $event["event_title"];
+              $tmp["event_descritpion_short"] = $event["event_descritpion_short"];
+              $tmp["event_start_date"] = $event["event_start_date"];
+              $tmp["participants"] = $event["participants"];
+              array_push($response["events"], $tmp);
+          }
+
+          echoRespnse(200, $response);
+      });
 
 /**
  * Generate QR
@@ -200,10 +230,9 @@ $app->get('/qr', function() {
 
 
 /**
- * Listing single task of particual user
+ * Listing single event
  * method GET
- * url /tasks/:id
- * Will return 404 if the task doesn't belongs to user
+ * url /event/:id
  */
 $app->get('/event/:id', 'authenticate', function($eventID) {
             global $user_id;
@@ -217,6 +246,17 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["error"] = false;
                 $response["event_id"] = $result["event_id"];
                 $response["event_title"] = $result["event_title"];
+                $response["event_description"] = $result["event_description"];
+                $response["event_latitude"] = $result["event_latitude"];
+                $response["event_longitude"] = $result["event_longitude"];
+                $response["event_start_date"] = $result["event_start_date"];
+                $response["event_end_date"] = $result["event_end_date"];
+                $response["event_additional_info"] = $result["event_additional_info"];
+                $response["event_image"] = $result["event_image"];
+                $response["event_tickets"] = $result["event_tickets"];
+                $response["event_card_payment"] = $result["event_card_payment"];
+                $response["event_max_participants"] = $result["event_max_participants"];
+                $response["event_accepted"] = $result["event_accepted"];
                 $response["event_descritpion_short"] = $result["event_descritpion_short"];
                 $response["participants"] = $result["participants"];
                 echoRespnse(200, $response);
@@ -244,7 +284,7 @@ $app->post('/tasks', 'authenticate', function() use ($app) {
             $db = new DbHandler();
 
             // creating new task
-            $task_id = $db->createTask($user_id, $task);
+            $task_id = $db->createEvent($user_id, $task);
 
             if ($task_id != NULL) {
                 $response["error"] = false;
