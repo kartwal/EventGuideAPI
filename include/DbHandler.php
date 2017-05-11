@@ -164,7 +164,7 @@ class DbHandler {
      * @param String $api_key user api key
      */
     public function getUserId($api_key) {
-        $stmt = $this->conn->prepare("SELECT id FROM users WHERE api_key = ?");
+        $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE api_key = ?");
         $stmt->bind_param("s", $api_key);
         if ($stmt->execute()) {
             $stmt->bind_result($user_id);
@@ -185,7 +185,7 @@ class DbHandler {
      * @return boolean
      */
     public function isValidApiKey($api_key) {
-        $stmt = $this->conn->prepare("SELECT id from users WHERE api_key = ?");
+        $stmt = $this->conn->prepare("SELECT user_id from users WHERE api_key = ?");
         $stmt->bind_param("s", $api_key);
         $stmt->execute();
         $stmt->store_result();
@@ -256,13 +256,43 @@ class DbHandler {
         }
     }
 
+    public function getEventDetails($event_id) {
+        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description_short, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
+        $stmt->bind_param("i", $event_id);
+        if ($stmt->execute()) {
+            $res = array();
+            $stmt->bind_result($event_id, $event_title,  $event_descritpion_short, $participants);
+            // TODO
+            // $task = $stmt->get_result()->fetch_assoc();
+            $stmt->fetch();
+            $res["event_id"] = $event_id;
+            $res["event_title"] = $event_title;
+            $res["event_descritpion_short"] = $event_descritpion_short;
+            $res["participants"] = $participants;
+            $stmt->close();
+            return $res;
+        } else {
+            return NULL;
+        }
+    }
+
     /**
      * Fetching all user tasks
      * @param String $user_id id of the user
      */
     public function getAllUserTasks($user_id) {
-        $stmt = $this->conn->prepare("SELECT t.* FROM tasks t, user_tasks ut WHERE t.id = ut.task_id AND ut.user_id = ?");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $this->conn->prepare("SELECT * FROM events");
+        // $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $tasks = $stmt->get_result();
+        $stmt->close();
+        return $tasks;
+    }
+    /**
+     * Fetching all events
+     */
+    public function getAllEvents() {
+        $stmt = $this->conn->prepare("SELECT e.*, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id GROUP BY e.event_id");
         $stmt->execute();
         $tasks = $stmt->get_result();
         $stmt->close();

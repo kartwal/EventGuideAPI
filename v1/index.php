@@ -2,6 +2,7 @@
 
 require_once '../include/DbHandler.php';
 require_once '../include/PassHash.php';
+require_once '../include/QRlib.php';
 require '.././libs/Slim/Slim.php';
 
 \Slim\Slim::registerAutoloader();
@@ -135,31 +136,68 @@ $app->post('/login', function() use ($app) {
 /**
  * Listing all tasks of particual user
  * method GET
- * url /tasks
+ * url /getEvents
  */
-$app->get('/tasks', 'authenticate', function() {
+$app->get('/getEvents', 'authenticate', function() {
             global $user_id;
             $response = array();
             $db = new DbHandler();
 
             // fetching all user tasks
-            $result = $db->getAllUserTasks($user_id);
+            $result = $db->getAllEvents();
 
             $response["error"] = false;
-            $response["tasks"] = array();
+            $response["events"] = array();
 
             // looping through result and preparing tasks array
-            while ($task = $result->fetch_assoc()) {
+            while ($event = $result->fetch_assoc()) {
                 $tmp = array();
-                $tmp["id"] = $task["id"];
-                $tmp["task"] = $task["task"];
-                $tmp["status"] = $task["status"];
-                $tmp["createdAt"] = $task["created_at"];
-                array_push($response["tasks"], $tmp);
+                $tmp["event_id"] = $event["event_id"];
+                $tmp["event_title"] = $event["event_title"];
+                $tmp["event_descritpion_short"] = $event["event_descritpion_short"];
+                $tmp["event_start_date"] = $event["event_start_date"];
+                $tmp["participants"] = $event["participants"];
+                array_push($response["events"], $tmp);
             }
 
             echoRespnse(200, $response);
         });
+
+/**
+ * Generate QR
+ * method GET
+ * url /qr
+ */
+$app->get('/qr', function() {
+
+    $tempDir = "qr_images/";
+
+    $codeContents = 'This Goes From File';
+
+    // we need to generate filename somehow,
+    // with md5 or with database ID used to obtains $codeContents...
+    $fileName = md5($codeContents).'.png';
+
+    $pngAbsoluteFilePath = $tempDir.$fileName;
+    $urlRelativeFilePath = $pngAbsoluteFilePath;
+
+    // generating
+    if (!file_exists($pngAbsoluteFilePath)) {
+        QRcode::png($codeContents, $pngAbsoluteFilePath);
+        echo 'File generated!';
+        echo '<hr />';
+    } else {
+        echo 'File already generated! We can use this cached file to speed up site on common codes!';
+        echo '<hr />';
+    }
+
+    echo 'Server PNG File: '.$pngAbsoluteFilePath;
+    echo '<hr />';
+
+    // displaying
+    echo '<img src="'.$urlRelativeFilePath.'" />';
+        });
+
 
 /**
  * Listing single task of particual user
@@ -167,20 +205,20 @@ $app->get('/tasks', 'authenticate', function() {
  * url /tasks/:id
  * Will return 404 if the task doesn't belongs to user
  */
-$app->get('/tasks/:id', 'authenticate', function($task_id) {
+$app->get('/event/:id', 'authenticate', function($eventID) {
             global $user_id;
             $response = array();
             $db = new DbHandler();
 
             // fetch task
-            $result = $db->getTask($task_id, $user_id);
+            $result = $db->getEventDetails($eventID);
 
             if ($result != NULL) {
                 $response["error"] = false;
-                $response["id"] = $result["id"];
-                $response["task"] = $result["task"];
-                $response["status"] = $result["status"];
-                $response["createdAt"] = $result["created_at"];
+                $response["event_id"] = $result["event_id"];
+                $response["event_title"] = $result["event_title"];
+                $response["event_descritpion_short"] = $result["event_descritpion_short"];
+                $response["participants"] = $result["participants"];
                 echoRespnse(200, $response);
             } else {
                 $response["error"] = true;
