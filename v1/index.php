@@ -248,17 +248,17 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["event_title"] = $result["event_title"];
                 $response["event_description"] = $result["event_description"];
                 $response["event_description_short"] = $result["event_description_short"];
-                $response["event_id"] = $result["event_id"];
-                $response["event_latitude"] = $result["event_latitude"];
-                $response["event_longitude"] = $result["event_longitude"];
-                $response["event_start_date"] = $result["event_start_date"];
-                $response["event_end_date"] = $result["event_end_date"];
-                $response["event_additional_info"] = $result["event_additional_info"];
-                $response["event_tickets"] = $result["event_tickets"];
-                $response["event_card_payment"] = $result["event_card_payment"];
-                $response["event_max_participants"] = $result["event_max_participants"];
+                $response["Event ID:"] = $result["event_id"];
+                $response["Event Latitude:"] = $result["event_latitude"];
+                $response["Event Longitude"] = $result["event_longitude"];
+                $response["Event Start Date"] = $result["event_start_date"];
+                $response["Event End Date"] = $result["event_end_date"];
+                $response["Event Additional Info"] = $result["event_additional_info"];
+                $response["Event Tickets"] = $result["event_tickets"];
+                $response["Event card payment"] = $result["event_card_payment"];
+                $response["Event max participants"] = $result["event_max_participants"];
                 $response["event_accepted"] = $result["event_accepted"];
-                $response["participants"] = $result["participants"];
+                $response["Event Participants"] = $result["participants"];
                 echoRespnse(200, $response);
             } else {
                 $response["error"] = true;
