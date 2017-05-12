@@ -204,30 +204,20 @@ class DbHandler {
     /* ------------- `events` table method ------------------ */
 
     /**
-     * Creating new task
+     * Creating new event
      * @param String $user_id user id to whom task belongs to
-     * @param String $task task text
+     * @param String $event event text
      */
-    public function createEvent($user_id, $task) {
-        $stmt = $this->conn->prepare("INSERT INTO tasks(task) VALUES(?)");
-        $stmt->bind_param("s", $task);
+    public function createEvent($par1, $par2) {
+        $stmt = $this->conn->prepare("INSERT INTO events(event) VALUES(?)");
+        $stmt->bind_param("s", $par1);
         $result = $stmt->execute();
         $stmt->close();
 
         if ($result) {
-            // task row created
-            // now assign the task to user
-            $new_task_id = $this->conn->insert_id;
-            $res = $this->createUserTask($user_id, $new_task_id);
-            if ($res) {
-                // task created successfully
-                return $new_task_id;
-            } else {
-                // task failed to create
-                return NULL;
-            }
+			return 1;
         } else {
-            // task failed to create
+            // event failed to create
             return NULL;
         }
     }
@@ -317,23 +307,43 @@ class DbHandler {
         return $num_affected_rows > 0;
     }
 
-    /* ------------- `user_tasks` table method ------------------ */
+    /* ------------- `user_events` table method ------------------ */
 
     /**
-     * Function to assign a task to user
+     * Function to sign user to event
      * @param String $user_id id of the user
-     * @param String $task_id id of the task
+     * @param String $event_id id of the event
      */
-    public function createUserTask($user_id, $task_id) {
-        $stmt = $this->conn->prepare("INSERT INTO user_tasks(user_id, task_id) values(?, ?)");
-        $stmt->bind_param("ii", $user_id, $task_id);
-        $result = $stmt->execute();
+    public function signUserToEvent($user_id, $event_id) {
 
+		//TODO ERASE THIS:
+		$event_id = 1;
+
+        $stmt = $this->conn->prepare("SELECT id FROM users_events WHERE event_id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $event_id, $user_id);
+        $result = $stmt->execute();
+        $stmt->store_result();
+        $num_rows = $stmt->num_rows;
+		$stmt->close();
         if (false === $result) {
-            die('execute() failed: ' . htmlspecialchars($stmt->error));
+				die('execute() failed: ' . htmlspecialchars($stmt->error));
         }
-        $stmt->close();
-        return $result;
+		if($num_rows == 0){
+			$stmt2 = $this->conn->prepare("INSERT INTO users_events(user_id, event_id) values(?, ?)");
+			$stmt2->bind_param("ii", $user_id, $event_id);
+			$result = $stmt2->execute();
+			$status = 1;
+			if (false === $result) {
+				$status = 0;
+				die('execute() failed: ' . htmlspecialchars($stmt2->error));
+			}
+			$stmt2->close();
+		}
+		else{
+			$status = 2;
+		}
+
+        return $status;
     }
 
 }

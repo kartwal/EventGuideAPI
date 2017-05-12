@@ -154,7 +154,7 @@ $app->get('/getEventsList', 'authenticate', function() {
                 $tmp = array();
                 $tmp["event_id"] = $event["event_id"];
                 $tmp["event_title"] = $event["event_title"];
-                $tmp["event_descritpion_short"] = $event["event_descritpion_short"];
+                $tmp["event_description_short"] = $event["event_description_short"];
                 $tmp["event_start_date"] = $event["event_start_date"];
                 $tmp["participants"] = $event["participants"];
                 array_push($response["events"], $tmp);
@@ -184,7 +184,7 @@ $app->get('/getAllUserEvents', 'authenticate', function() {
               $tmp = array();
               $tmp["event_id"] = $event["event_id"];
               $tmp["event_title"] = $event["event_title"];
-              $tmp["event_descritpion_short"] = $event["event_descritpion_short"];
+              $tmp["event_description_short"] = $event["event_description_short"];
               $tmp["event_start_date"] = $event["event_start_date"];
               $tmp["participants"] = $event["participants"];
               array_push($response["events"], $tmp);
@@ -244,20 +244,20 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
 
             if ($result != NULL) {
                 $response["error"] = false;
-                $response["event_id"] = $result["event_id"];
+                $response["event_image"] = $result["event_image"];
                 $response["event_title"] = $result["event_title"];
                 $response["event_description"] = $result["event_description"];
+                $response["event_description_short"] = $result["event_description_short"];
+                $response["event_id"] = $result["event_id"];
                 $response["event_latitude"] = $result["event_latitude"];
                 $response["event_longitude"] = $result["event_longitude"];
                 $response["event_start_date"] = $result["event_start_date"];
                 $response["event_end_date"] = $result["event_end_date"];
                 $response["event_additional_info"] = $result["event_additional_info"];
-                $response["event_image"] = $result["event_image"];
                 $response["event_tickets"] = $result["event_tickets"];
                 $response["event_card_payment"] = $result["event_card_payment"];
                 $response["event_max_participants"] = $result["event_max_participants"];
                 $response["event_accepted"] = $result["event_accepted"];
-                $response["event_descritpion_short"] = $result["event_descritpion_short"];
                 $response["participants"] = $result["participants"];
                 echoRespnse(200, $response);
             } else {
@@ -267,33 +267,72 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
             }
         });
 
+
 /**
- * Creating new task in db
- * method POST
- * params - name
- * url - /tasks/
+ * Sign user to event
+ * method GET
+ * params - eventID
+ * url - /signUserToEvent/
  */
-$app->post('/tasks', 'authenticate', function() use ($app) {
-            // check for required params
-            verifyRequiredParams(array('task'));
+$app->get('/signUserToEvent/:id', 'authenticate', function($eventID) {
 
             $response = array();
-            $task = $app->request->post('task');
-
             global $user_id;
+
             $db = new DbHandler();
+            $status = $db->signUserToEvent($user_id, $eventID);
 
-            // creating new task
-            $task_id = $db->createEvent($user_id, $task);
-
-            if ($task_id != NULL) {
+            if ($status != NULL && $status == 2) {
                 $response["error"] = false;
-                $response["message"] = "Task created successfully";
-                $response["task_id"] = $task_id;
+                $response["message"] = "User already signed to this event";
+                $response["eventID"] = $eventID;
+                $response["responseCode"] = 2;
+                echoRespnse(201, $response);
+            } else if ($status != NULL && $status == 1){
+                $response["error"] = false;
+                $response["message"] = "User signed to event successfully";
+                $response["eventID"] = $eventID;
+                $response["responseCode"] = 1;
+                echoRespnse(201, $response);
+
+            } else {
+                $response["error"] = true;
+                $response["message"] = "Failed to sign user to event";
+                $response["responseCode"] = 0;
+                echoRespnse(200, $response);
+
+            }
+        });
+
+
+/**
+ * Sign user to event
+ * method POST
+ * params - name
+ * url - /createEvent
+ */
+$app->post('/createEvent', 'authenticate', function() use ($app) {
+            // check for required params
+
+			verifyRequiredParams(array('par1', 'par2'));
+            $par1 = $app->request->post('par1');
+            $par2 = $app->request->post('par2');
+
+            $response = array();
+            global $user_id;
+
+            $db = new DbHandler();
+            $status = $db->createEvent($par1, $par2);
+
+
+            if ($status != NULL) {
+                $response["error"] = false;
+                $response["message"] = "Event created successfully";
+                $response["task_id"] = $user_event_id;
                 echoRespnse(201, $response);
             } else {
                 $response["error"] = true;
-                $response["message"] = "Failed to create task. Please try again";
+                $response["message"] = "Failed to create Event. Please try again";
                 echoRespnse(200, $response);
             }
         });
