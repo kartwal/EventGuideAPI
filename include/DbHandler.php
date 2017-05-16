@@ -7,6 +7,7 @@
  * @author Ravi Tamada
  * @link URL Tutorial link
  */
+require_once '../include/QRlib.php';
 class DbHandler {
 
     private $conn;
@@ -209,8 +210,8 @@ class DbHandler {
      * @param String $event event text
      */
     public function createEvent($par1, $par2) {
-        $stmt = $this->conn->prepare("INSERT INTO events(event) VALUES(?)");
-        $stmt->bind_param("s", $par1);
+        $stmt = $this->conn->prepare("INSERT INTO events(event_title,event_description) VALUES(?,?)");
+        $stmt->bind_param("ss", $par1, $par2);
         $result = $stmt->execute();
         $stmt->close();
 
@@ -222,16 +223,31 @@ class DbHandler {
         }
     }
 
+	public function getEventQR($eventID){
+		$tempDir = "qr_images/";
+		$fileName = md5($eventID).'.png';
+
+		$pngAbsoluteFilePath = $tempDir.$fileName;
+		$urlRelativeFilePath = $pngAbsoluteFilePath;
+
+		// generating
+		QRcode::png($eventID, $pngAbsoluteFilePath);
+
+
+		return $pngAbsoluteFilePath;
+	}
+
     /**
      * Fetching single event
      * @param String $event_id of the event
      */
     public function getEventDetails($event_id) {
-        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description, e.event_latitude, e.event_longitude, e.event_start_date, e.event_end_date, e.event_additional_info, e.event_image, e.event_tickets, e.event_card_payment, e.event_max_participants, e.event_accepted, e.event_description_short, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
+
+        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description, e.event_latitude, e.event_longitude, e.event_start_date, e.event_end_date, e.event_additional_info, e.event_image, e.event_tickets, e.event_card_payment, e.event_max_participants, e.event_accepted, e.event_description_short, e.event_city, e.event_address, e.event_website, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
         $stmt->bind_param("i", $event_id);
         if ($stmt->execute()) {
             $res = array();
-            $stmt->bind_result($event_id, $event_title, $event_description, $event_latitude, $event_longitude, $event_start_date, $event_end_date, $event_additional_info, $event_image, $event_tickets, $event_card_payment, $event_max_participants, $event_accepted, $event_descritpion_short, $participants);
+            $stmt->bind_result($event_id, $event_title, $event_description, $event_latitude, $event_longitude, $event_start_date, $event_end_date, $event_additional_info, $event_image, $event_tickets, $event_card_payment, $event_max_participants, $event_accepted, $event_description_short, $event_city, $event_address, $event_website, $participants);
             $stmt->fetch();
             $res["event_id"] = $event_id;
             $res["event_title"] = $event_title;
@@ -242,18 +258,25 @@ class DbHandler {
             $res["event_end_date"] = $event_end_date;
             $res["event_additional_info"] = $event_additional_info;
             $res["event_image"] = $event_image;
-            $res["event_tickets"] = $event_tickets;
+            $res["event_tickets"] = $event_website;;
             $res["event_card_payment"] = $event_card_payment;
             $res["event_max_participants"] = $event_max_participants;
             $res["event_accepted"] = $event_accepted;
-            $res["event_descritpion_short"] = $event_descritpion_short;
+            $res["event_description_short"] = $event_description_short;
+            $res["event_city"] = $event_city;
+            $res["event_address"] = $event_address;
+            $res["event_website"] = $event_website;
             $res["participants"] = $participants;
+            $res["qr_code"] = "http://kartwal.ayz.pl/EventGuide_API/v1/".$this->getEventQR($event_id);
 
             $stmt->close();
             return $res;
         } else {
             return NULL;
         }
+
+
+
     }
 
     /**
@@ -268,6 +291,7 @@ class DbHandler {
         $stmt->close();
         return $tasks;
     }
+
     /**
      * Fetching all events
      */

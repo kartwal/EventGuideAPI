@@ -225,7 +225,7 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["event_description"] = $result["event_description"];
                 $response["event_description_short"] = $result["event_description_short"];
                 $response["Event ID:"] = $result["event_id"];
-                $response["Event Latitude:"] = $result["event_latitude"];
+                $response["Event Latitude"] = $result["event_latitude"];
                 $response["Event Longitude"] = $result["event_longitude"];
                 $response["Event Start Date"] = $result["event_start_date"];
                 $response["Event End Date"] = $result["event_end_date"];
@@ -234,6 +234,9 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["Event card payment"] = $result["event_card_payment"];
                 $response["Event max participants"] = $result["event_max_participants"];
                 $response["event_accepted"] = $result["event_accepted"];
+                $response["Event City"] = $result["event_city"];
+                $response["Event Address"] = $result["event_address"];
+                $response["Event Website"] = $result["event_website"];
                 $response["Event Participants"] = $result["participants"];
                 $response["QR Code"] = $result["qr_code"];
                 echoRespnse(200, $response);
