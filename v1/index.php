@@ -2,7 +2,6 @@
 
 require_once '../include/DbHandler.php';
 require_once '../include/PassHash.php';
-require_once '../include/QRlib.php';
 require '.././libs/Slim/Slim.php';
 
 \Slim\Slim::registerAutoloader();
@@ -157,6 +156,7 @@ $app->get('/getEventsList', 'authenticate', function() {
                 $tmp["event_description_short"] = $event["event_description_short"];
                 $tmp["event_start_date"] = $event["event_start_date"];
                 $tmp["participants"] = $event["participants"];
+                $tmp["event_image"] = $event["event_image"];
                 array_push($response["events"], $tmp);
             }
 
@@ -187,6 +187,7 @@ $app->get('/getAllUserEvents', 'authenticate', function() {
               $tmp["event_description_short"] = $event["event_description_short"];
               $tmp["event_start_date"] = $event["event_start_date"];
               $tmp["participants"] = $event["participants"];
+              $tmp["event_image"] = $event["event_image"];
               array_push($response["events"], $tmp);
           }
 
@@ -198,34 +199,9 @@ $app->get('/getAllUserEvents', 'authenticate', function() {
  * method GET
  * url /qr
  */
-$app->get('/qr', function() {
-
-    $tempDir = "qr_images/";
-
-    $codeContents = 'This Goes From File';
-
-    // we need to generate filename somehow,
-    // with md5 or with database ID used to obtains $codeContents...
-    $fileName = md5($codeContents).'.png';
-
-    $pngAbsoluteFilePath = $tempDir.$fileName;
-    $urlRelativeFilePath = $pngAbsoluteFilePath;
-
-    // generating
-    if (!file_exists($pngAbsoluteFilePath)) {
-        QRcode::png($codeContents, $pngAbsoluteFilePath);
-        echo 'File generated!';
-        echo '<hr />';
-    } else {
-        echo 'File already generated! We can use this cached file to speed up site on common codes!';
-        echo '<hr />';
-    }
-
-    echo 'Server PNG File: '.$pngAbsoluteFilePath;
-    echo '<hr />';
-
-    // displaying
-    echo '<img src="'.$urlRelativeFilePath.'" />';
+$app->get('/qr/:eventId', function($eventID) {
+			$db = new DbHandler();
+			return $db->getEventQR($eventID);
         });
 
 
@@ -259,6 +235,7 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["Event max participants"] = $result["event_max_participants"];
                 $response["event_accepted"] = $result["event_accepted"];
                 $response["Event Participants"] = $result["participants"];
+                $response["QR Code"] = $result["qr_code"];
                 echoRespnse(200, $response);
             } else {
                 $response["error"] = true;
@@ -274,11 +251,13 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
  * params - eventID
  * url - /signUserToEvent/
  */
-$app->get('/signUserToEvent/:id', 'authenticate', function($eventID) {
+$app->post('/signUserToEvent', 'authenticate', function() use ($app)  {
 
             $response = array();
             global $user_id;
 
+			verifyRequiredParams(array('eventID'));
+            $eventID = $app->request->post('eventID');
             $db = new DbHandler();
             $status = $db->signUserToEvent($user_id, $eventID);
 
