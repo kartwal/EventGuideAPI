@@ -27,7 +27,7 @@ class DbHandler {
      * @param String $email User login email id
      * @param String $password User login password
      */
-    public function createUser($email, $password) {
+    public function createUser($email, $password, $login) {
         require_once 'PassHash.php';
         $response = array();
 
@@ -40,8 +40,8 @@ class DbHandler {
             $api_key = $this->generateApiKey();
 
             // insert query
-            $stmt = $this->conn->prepare("INSERT INTO users(user_email, user_password, api_key, status) values(?, ?, ?, 1)");
-            $stmt->bind_param("sss", $email, $password_hash, $api_key);
+            $stmt = $this->conn->prepare("INSERT INTO users(user_email, user_password, user_login, api_key, status) values(?, ?, ?, ?, 1)");
+            $stmt->bind_param("ssss", $email, $password_hash, $login, $api_key);
 
             $result = $stmt->execute();
 
@@ -209,9 +209,9 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $event event text
      */
-    public function createEvent($par1, $par2) {
-        $stmt = $this->conn->prepare("INSERT INTO events(event_title,event_description) VALUES(?,?)");
-        $stmt->bind_param("ss", $par1, $par2);
+    public function createEvent($par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16) {
+        $stmt = $this->conn->prepare("INSERT INTO events(event_title, event_description, event_latitude, event_longitude, event_start_date, event_end_date, event_additional_info, event_image, event_tickets, event_card_payment, event_max_participants, event_accepted, event_description_short, event_address, event_website, event_city) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("ssssssssssssssss", $par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16);
         $result = $stmt->execute();
         $stmt->close();
 
@@ -296,11 +296,19 @@ class DbHandler {
      * Fetching all events
      */
     public function getAllEvents() {
-        $stmt = $this->conn->prepare("SELECT e.*, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id GROUP BY e.event_id");
+        $stmt = $this->conn->prepare("SELECT e.*, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_accepted = 1 GROUP BY e.event_id");
         $stmt->execute();
         $tasks = $stmt->get_result();
         $stmt->close();
         return $tasks;
+    }
+
+    public function getAllUsers() {
+      $stmt = $this->conn->prepare("SELECT * FROM users WHERE status = 1");
+      $stmt->execute();
+      $tasks = $stmt->get_result();
+      $stmt->close();
+      return $tasks;
     }
 
     /**
@@ -339,9 +347,6 @@ class DbHandler {
      * @param String $event_id id of the event
      */
     public function signUserToEvent($user_id, $event_id) {
-
-		//TODO ERASE THIS:
-		$event_id = 1;
 
         $stmt = $this->conn->prepare("SELECT id FROM users_events WHERE event_id = ? AND user_id = ?");
         $stmt->bind_param("ii", $event_id, $user_id);

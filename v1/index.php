@@ -59,7 +59,7 @@ function authenticate(\Slim\Route $route) {
  */
 $app->post('/register', function() use ($app) {
             // check for required params
-            verifyRequiredParams(array('email', 'password'));
+            verifyRequiredParams(array('email', 'password', 'login'));
 
             $response = array();
 
@@ -67,12 +67,13 @@ $app->post('/register', function() use ($app) {
             // $login = $app->request->post('login');
             $email = $app->request->post('email');
             $password = $app->request->post('password');
+            $login = $app->request->post('login');
 
             // validating email address
             validateEmail($email);
 
             $db = new DbHandler();
-            $res = $db->createUser($email, $password);
+            $res = $db->createUser($email, $password, $login);
 
             if ($res == USER_CREATED_SUCCESSFULLY) {
                 $response["error"] = false;
@@ -163,6 +164,35 @@ $app->get('/getEventsList', 'authenticate', function() {
             echoRespnse(200, $response);
         });
 
+
+        /**
+         * Listing all events
+         * method GET
+         * url /getEvents
+         */
+  $app->get('/getAllUsers', 'authenticate', function() {
+              global $user_id;
+              $response = array();
+              $db = new DbHandler();
+
+              // fetching all user tasks
+              $result = $db->getAllUsers();
+
+              $response["error"] = false;
+              $response["users"] = array();
+
+              // looping through result and preparing tasks array
+              while ($res = $result->fetch_assoc()) {
+                  $tmp = array();
+                  $tmp["user_login"] = $res["user_login"];
+                  $tmp["user_email"] = $res["user_email"];
+                  $tmp["user_id"] = $res["user_id"];
+                  array_push($response["users"], $tmp);
+              }
+
+              echoRespnse(200, $response);
+          });
+
 /**
  * Listing all events of particual user
  * method GET
@@ -224,7 +254,7 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["event_title"] = $result["event_title"];
                 $response["event_description"] = $result["event_description"];
                 $response["event_description_short"] = $result["event_description_short"];
-                $response["Event ID:"] = $result["event_id"];
+                $response["Event ID"] = $result["event_id"];
                 $response["Event Latitude"] = $result["event_latitude"];
                 $response["Event Longitude"] = $result["event_longitude"];
                 $response["Event Start Date"] = $result["event_start_date"];
@@ -250,7 +280,7 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
 
 /**
  * Sign user to event
- * method GET
+ * method POST
  * params - eventID
  * url - /signUserToEvent/
  */
@@ -288,7 +318,7 @@ $app->post('/signUserToEvent', 'authenticate', function() use ($app)  {
 
 
 /**
- * Sign user to event
+ * Create event
  * method POST
  * params - name
  * url - /createEvent
@@ -296,15 +326,29 @@ $app->post('/signUserToEvent', 'authenticate', function() use ($app)  {
 $app->post('/createEvent', 'authenticate', function() use ($app) {
             // check for required params
 
-			verifyRequiredParams(array('par1', 'par2'));
-            $par1 = $app->request->post('par1');
-            $par2 = $app->request->post('par2');
+			verifyRequiredParams(array('event_title', 'event_description', 'event_latitude', 'event_longitude', 'event_start_date', 'event_end_date', 'event_additional_info', 'event_image', 'event_tickets', 'event_card_payment', 'event_max_participants', 'event_accepted', 'event_description_short', 'event_address', 'event_website', 'event_city' ));
+            $par1 = $app->request->post('event_title');
+            $par2 = $app->request->post('event_description');
+            $par3 = $app->request->post('event_latitude');
+            $par4 = $app->request->post('event_longitude');
+            $par5 = $app->request->post('event_start_date');
+            $par6 = $app->request->post('event_end_date');
+            $par7 = $app->request->post('event_additional_info');
+            $par8 = $app->request->post('event_image');
+            $par9 = $app->request->post('event_tickets');
+            $par10 = $app->request->post('event_card_payment');
+            $par11 = $app->request->post('event_max_participants');
+            $par12 = $app->request->post('event_accepted');
+            $par13 = $app->request->post('event_description_short');
+            $par14 = $app->request->post('event_address');
+            $par15 = $app->request->post('event_website');
+            $par16 = $app->request->post('event_city');
 
             $response = array();
             global $user_id;
 
             $db = new DbHandler();
-            $status = $db->createEvent($par1, $par2);
+            $status = $db->createEvent($par1, $par2, $par3, $par4, $par5 ,$par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16);
 
 
             if ($status != NULL) {
