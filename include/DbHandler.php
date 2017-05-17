@@ -258,7 +258,7 @@ class DbHandler {
             $res["event_end_date"] = $event_end_date;
             $res["event_additional_info"] = $event_additional_info;
             $res["event_image"] = $event_image;
-            $res["event_tickets"] = $event_website;;
+            $res["event_tickets"] = $event_tickets;
             $res["event_card_payment"] = $event_card_payment;
             $res["event_max_participants"] = $event_max_participants;
             $res["event_accepted"] = $event_accepted;
