@@ -209,9 +209,9 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $event event text
      */
-    public function createEvent($par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16) {
-        $stmt = $this->conn->prepare("INSERT INTO events(event_title, event_description, event_latitude, event_longitude, event_start_date, event_end_date, event_additional_info, event_image, event_tickets, event_card_payment, event_max_participants, event_accepted, event_description_short, event_address, event_website, event_city) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("ssssssssssssssss", $par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16);
+    public function createEvent($par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17) {
+        $stmt = $this->conn->prepare("INSERT INTO events(event_title, event_description, event_latitude, event_longitude, event_start_date, event_end_date, event_additional_info, event_image, event_tickets, event_card_payment, event_max_participants, event_accepted, event_description_short, event_address, event_website, event_city, creator_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("ssssssssssssssss", $par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17);
         $result = $stmt->execute();
         $stmt->close();
 
@@ -243,11 +243,11 @@ class DbHandler {
      */
     public function getEventDetails($event_id) {
 
-        $stmt = $this->conn->prepare("SELECT e.event_id, e.event_title, e.event_description, e.event_latitude, e.event_longitude, e.event_start_date, e.event_end_date, e.event_additional_info, e.event_image, e.event_tickets, e.event_card_payment, e.event_max_participants, e.event_accepted, e.event_description_short, e.event_city, e.event_address, e.event_website, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
+        $stmt = $this->conn->prepare("SELECT e.event_id, e.creator_id, e.event_title, e.event_description, e.event_latitude, e.event_longitude, e.event_start_date, e.event_end_date, e.event_additional_info, e.event_image, e.event_tickets, e.event_card_payment, e.event_max_participants, e.event_accepted, e.event_description_short, e.event_city, e.event_address, e.event_website, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.event_id = ? GROUP BY e.event_id");
         $stmt->bind_param("i", $event_id);
         if ($stmt->execute()) {
             $res = array();
-            $stmt->bind_result($event_id, $event_title, $event_description, $event_latitude, $event_longitude, $event_start_date, $event_end_date, $event_additional_info, $event_image, $event_tickets, $event_card_payment, $event_max_participants, $event_accepted, $event_description_short, $event_city, $event_address, $event_website, $participants);
+            $stmt->bind_result($event_id, $creator_id, $event_title, $event_description, $event_latitude, $event_longitude, $event_start_date, $event_end_date, $event_additional_info, $event_image, $event_tickets, $event_card_payment, $event_max_participants, $event_accepted, $event_description_short, $event_city, $event_address, $event_website, $participants);
             $stmt->fetch();
             $res["event_id"] = $event_id;
             $res["event_title"] = $event_title;
@@ -267,6 +267,7 @@ class DbHandler {
             $res["event_address"] = $event_address;
             $res["event_website"] = $event_website;
             $res["participants"] = $participants;
+            $res["creator_id"] = $creator_id;
             $res["qr_code"] = "http://kartwal.ayz.pl/EventGuide_API/v1/".$this->getEventQR($event_id);
 
             $stmt->close();

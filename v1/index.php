@@ -268,6 +268,7 @@ $app->get('/event/:id', 'authenticate', function($eventID) {
                 $response["Event Address"] = $result["event_address"];
                 $response["Event Website"] = $result["event_website"];
                 $response["Event Participants"] = $result["participants"];
+                $response["Event Author ID"] = $result["creator_id"];
                 $response["QR Code"] = $result["qr_code"];
                 echoRespnse(200, $response);
             } else {
@@ -326,7 +327,7 @@ $app->post('/signUserToEvent', 'authenticate', function() use ($app)  {
 $app->post('/createEvent', 'authenticate', function() use ($app) {
             // check for required params
 
-			verifyRequiredParams(array('event_title', 'event_description', 'event_latitude', 'event_longitude', 'event_start_date', 'event_end_date', 'event_additional_info', 'event_image', 'event_tickets', 'event_card_payment', 'event_max_participants', 'event_accepted', 'event_description_short', 'event_address', 'event_website', 'event_city' ));
+			verifyRequiredParams(array('event_title', 'event_description', 'event_latitude', 'event_longitude', 'event_start_date', 'event_end_date', 'event_additional_info', 'event_image', 'event_tickets', 'event_card_payment', 'event_max_participants', 'event_accepted', 'event_description_short', 'event_address', 'event_website', 'event_city', 'user_id' ));
             $par1 = $app->request->post('event_title');
             $par2 = $app->request->post('event_description');
             $par3 = $app->request->post('event_latitude');
@@ -343,12 +344,13 @@ $app->post('/createEvent', 'authenticate', function() use ($app) {
             $par14 = $app->request->post('event_address');
             $par15 = $app->request->post('event_website');
             $par16 = $app->request->post('event_city');
+            $par17 = $app->request->post('user_id');
 
             $response = array();
             global $user_id;
 
             $db = new DbHandler();
-            $status = $db->createEvent($par1, $par2, $par3, $par4, $par5 ,$par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16);
+            $status = $db->createEvent($par1, $par2, $par3, $par4, $par5 ,$par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17);
 
 
             if ($status != NULL) {
