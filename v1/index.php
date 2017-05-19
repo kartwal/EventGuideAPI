@@ -196,7 +196,7 @@ $app->get('/getEventsList', 'authenticate', function() {
 /**
  * Listing all events of particual user
  * method GET
- * url /getEvents
+ * url /getAllUserEvents
  */
 $app->get('/getAllUserEvents', 'authenticate', function() {
           global $user_id;
@@ -223,6 +223,37 @@ $app->get('/getAllUserEvents', 'authenticate', function() {
 
           echoRespnse(200, $response);
       });
+  /**
+   * Listing all events created by particual user
+   * method GET
+   * url /getAllUserCreatedEvents
+   */
+  $app->get('/getAllUserCreatedEvents', 'authenticate', function() {
+            global $user_id;
+            $response = array();
+            $db = new DbHandler();
+
+            // fetching all user tasks
+            $result = $db->getAllUserCreatedEvents($user_id);
+
+            $response["error"] = false;
+            $response["events"] = array();
+
+            // looping through result and preparing tasks array
+            while ($event = $result->fetch_assoc()) {
+                $tmp = array();
+                $tmp["event_id"] = $event["event_id"];
+                $tmp["event_title"] = $event["event_title"];
+                $tmp["event_description_short"] = $event["event_description_short"];
+                $tmp["event_start_date"] = $event["event_start_date"];
+                $tmp["participants"] = $event["participants"];
+                $tmp["event_image"] = $event["event_image"];
+                $tmp["event_accepted"] = $event["event_accepted"];
+                array_push($response["events"], $tmp);
+            }
+
+            echoRespnse(200, $response);
+        });
 
 /**
  * Generate QR
@@ -327,7 +358,7 @@ $app->post('/signUserToEvent', 'authenticate', function() use ($app)  {
 $app->post('/createEvent', 'authenticate', function() use ($app) {
             // check for required params
 
-			verifyRequiredParams(array('event_title', 'event_description', 'event_latitude', 'event_longitude', 'event_start_date', 'event_end_date', 'event_additional_info', 'event_image', 'event_tickets', 'event_card_payment', 'event_max_participants', 'event_accepted', 'event_description_short', 'event_address', 'event_website', 'event_city', 'user_id' ));
+			verifyRequiredParams(array('event_title', 'event_description', 'event_latitude', 'event_longitude', 'event_start_date', 'event_end_date', 'event_additional_info', 'event_image', 'event_tickets', 'event_card_payment', 'event_max_participants', 'event_accepted', 'event_description_short', 'event_address', 'event_website', 'event_city' ));
             $par1 = $app->request->post('event_title');
             $par2 = $app->request->post('event_description');
             $par3 = $app->request->post('event_latitude');
@@ -350,7 +381,7 @@ $app->post('/createEvent', 'authenticate', function() use ($app) {
             global $user_id;
 
             $db = new DbHandler();
-            $status = $db->createEvent($par1, $par2, $par3, $par4, $par5 ,$par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17);
+            $status = $db->createEvent($par1, $par2, $par3, $par4, $par5 ,$par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $user_id);
 
 
             if ($status != NULL) {

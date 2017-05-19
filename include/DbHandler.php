@@ -209,9 +209,9 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $event event text
      */
-    public function createEvent($par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17) {
+    public function createEvent($par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $user_id) {
         $stmt = $this->conn->prepare("INSERT INTO events(event_title, event_description, event_latitude, event_longitude, event_start_date, event_end_date, event_additional_info, event_image, event_tickets, event_card_payment, event_max_participants, event_accepted, event_description_short, event_address, event_website, event_city, creator_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("ssssssssssssssss", $par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $par17);
+        $stmt->bind_param("sssssssssssssssss", $par1, $par2, $par3, $par4, $par5, $par6, $par7, $par8, $par9, $par10, $par11, $par12, $par13, $par14, $par15, $par16, $user_id);
         $result = $stmt->execute();
         $stmt->close();
 
@@ -286,6 +286,19 @@ class DbHandler {
      */
     public function getAllUserEvents($user_id) {
         $stmt = $this->conn->prepare("SELECT e.* FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE ue.user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $tasks = $stmt->get_result();
+        $stmt->close();
+        return $tasks;
+    }
+
+    /**
+     * Fetching all user created events
+     * @param String $user_id id of the user
+     */
+    public function getAllUserCreatedEvents($user_id) {
+        $stmt = $this->conn->prepare("SELECT e.* FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.creator_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $tasks = $stmt->get_result();
