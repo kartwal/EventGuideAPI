@@ -285,7 +285,7 @@ class DbHandler {
      * @param String $user_id id of the user
      */
     public function getAllUserEvents($user_id) {
-        $stmt = $this->conn->prepare("SELECT e.* FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE ue.user_id = ?");
+        $stmt = $this->conn->prepare("SELECT e.*, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE ue.user_id = ? GROUP BY e.event_id");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $tasks = $stmt->get_result();
@@ -298,7 +298,7 @@ class DbHandler {
      * @param String $user_id id of the user
      */
     public function getAllUserCreatedEvents($user_id) {
-        $stmt = $this->conn->prepare("SELECT e.* FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.creator_id = ?");
+        $stmt = $this->conn->prepare("SELECT e.*, COUNT(ue.user_id) AS participants FROM events e LEFT JOIN users_events ue ON e.event_id = ue.event_id WHERE e.creator_id = ? GROUP BY e.event_id");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $tasks = $stmt->get_result();
